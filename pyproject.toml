@@ -1,0 +1,89 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "osspulse"
+version = "0.1.0"
+description = "Survival, forecasting and causal analysis of open-source ecosystems"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+license = "MIT"
+authors = [{ name = "Tay Pin Quan" }]
+
+dependencies = [
+    "pydantic>=2.7",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0",
+    "tenacity>=8.2",
+    "requests>=2.31",
+    "orjson>=3.10",
+    "numpy>=1.26,<2.1",
+    "pandas>=2.1",
+    "pyarrow>=15",
+    "duckdb>=1.0",
+    "pandera>=0.19",
+    "lifelines>=0.27",
+    "scikit-survival>=0.22",
+    "scikit-learn>=1.4",
+    "statsforecast>=1.7",
+    "lightgbm>=4.3",
+    "streamlit>=1.35",
+    "matplotlib>=3.8",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-cov>=5",
+    "ruff>=0.5",
+    "mypy>=1.10",
+    "types-requests",
+    "types-pyyaml",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "TID"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/osspulse/forecast.py" = ["E402"]
+"src/osspulse/survival.py" = ["E402"]
+"app/dashboard.py" = ["E402"]
+
+[tool.mypy]
+python_version = "3.11"
+
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unused_configs = true
+no_implicit_optional = true
+check_untyped_defs = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "pandas.*",
+    "numpy.*",
+    "pyarrow.*",
+    "lifelines.*",
+    "sksurv.*",
+    "statsforecast.*",
+    "lightgbm.*",
+    "matplotlib.*",
+    "duckdb.*",
+    "orjson.*",
+    "tenacity.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

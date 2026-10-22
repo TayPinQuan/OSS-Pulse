@@ -1,0 +1,12 @@
+{
+  "metadata_repos": 35998,
+  "with_any_active_event": 11079,
+  "included_stars_90d": 7097,
+  "included_contributors_90d": 7120,
+  "included_both_pre_sample": 5421,
+  "sampled_to": 5421,
+  "sample_seed": 42,
+  "events_observed": 294,
+  "censored": 5127,
+  "median_duration_days": 192.0
+}

@@ -1,0 +1,50 @@
+# Forecast target packages.
+# Rule: at least 20 established (pre-2019) + at least 10 newer (2019+).
+# pypistats caches daily data per package under raw/pypi/<name>.json.
+#
+# To swap packages: edit this file and re-run `make pypi`. Cached packages
+# are skipped; only new names are fetched.
+
+established:
+  - requests
+  - numpy
+  - pandas
+  - scipy
+  - matplotlib
+  - flask
+  - django
+  - sqlalchemy
+  - pillow
+  - pyyaml
+  - scikit-learn
+  - seaborn
+  - statsmodels
+  - plotly
+  - beautifulsoup4
+  - lxml
+  - redis
+  - celery
+  - click
+  - attrs
+
+newer:
+  - httpx          # 2019
+  - fastapi        # 2018, growth in 2019+
+  - pydantic       # v1 2019, v2 2023
+  - uvicorn        # 2018
+  - rich           # 2020
+  - typer          # 2019
+  - loguru         # 2018
+  - transformers   # 2018, growth 2019+
+  - datasets       # 2020
+  - tokenizers     # 2019
+  - sentence-transformers  # 2019
+  - xgboost        # stable
+  - lightgbm       # stable
+  - optuna         # 2018
+  - shap           # 2018
+  - mlflow         # 2018
+  - polars         # 2020
+  - duckdb         # 2021
+  - nixtla         # 2022 (expect short history)
+  - statsforecast  # 2022

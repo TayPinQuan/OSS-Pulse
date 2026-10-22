@@ -1,0 +1,30 @@
+{
+  "n_repos": 5421,
+  "event_rate": 0.054233536247924735,
+  "c_index_cox": 0.7733043127614402,
+  "c_index_rsf": 0.7440241780382819,
+  "rsf_importances": {
+    "log_contributors_90d": 0.04711969960619111,
+    "has_issue_response": 0.01689715175382367,
+    "median_response_capped": 0.015202857404524206,
+    "has_closed_pr": -0.0013279604359373032,
+    "pr_merge_rate_90d_filled": 0.0036175473944500824,
+    "log_stars_90d": 0.025368623500320542,
+    "log_pushes_90d": 0.006044509570473533,
+    "license_present": 0.02839087828555731
+  },
+  "km_logrank": {
+    "license_present": {
+      "p_value": 1.4989996441049515e-14,
+      "test_statistic": 59.09946540137906
+    },
+    "has_issue_response": {
+      "p_value": 2.8832122784007866e-20,
+      "test_statistic": 85.06770666440727
+    },
+    "stars_bucket": {
+      "p_value": 0.09316782562137299,
+      "test_statistic": 2.8187691021006875
+    }
+  }
+}

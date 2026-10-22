@@ -1,0 +1,13 @@
+{
+  "calibration_ici": 0.06383044412974967,
+  "calibration_horizons": [
+    180,
+    270,
+    360
+  ],
+  "dca_horizons": [
+    180,
+    360
+  ],
+  "subgroups_n_models": 32
+}

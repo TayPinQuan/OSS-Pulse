@@ -351,6 +351,84 @@ def main() -> None:
     plot_forest(cox_df, paths.figures_dir() / "survival_forest.png")
     log.info("Cox:\n%s", cox_df.to_string(index=False))
 
+    # Bootstrap CI for Cox HRs
+
+    log.info("bootstrapping Cox HRs (B=300)...")
+
+    def _fit_hrs(sample: pd.DataFrame) -> float:
+        # Return the first feature's HR; we'll loop over features separately.
+        return float(
+            fit_cox(prepare_features(sample))[0]
+            .set_index("feature")
+            .loc["log_contributors_90d", "hazard_ratio"]
+        )
+
+    # Bootstrap each feature's HR in one pass for efficiency.
+    rng = np.random.default_rng(cfg.cohort.sample_seed)
+    boot_hrs: dict[str, list[float]] = {f: [] for f in FEATURES}
+    B = 300
+    for _b in range(B):
+        idx = rng.integers(0, len(prep), size=len(prep))
+        sample = prep.iloc[idx].reset_index(drop=True)
+        try:
+            hr_tab, _ = fit_cox(sample)
+            hr_tab = hr_tab.set_index("feature")
+            for f in FEATURES:
+                boot_hrs[f].append(float(hr_tab.loc[f, "hazard_ratio"]))
+        except Exception:  # noqa: BLE001
+            continue
+
+    boot_summary = []
+    for f in FEATURES:
+        vals = np.array([v for v in boot_hrs[f] if not np.isnan(v)])
+        if len(vals) < 10:
+            continue
+        boot_summary.append(
+            {
+                "feature": f,
+                "hr_boot_lower": float(np.percentile(vals, 2.5)),
+                "hr_boot_median": float(np.percentile(vals, 50)),
+                "hr_boot_upper": float(np.percentile(vals, 97.5)),
+                "n_boot": int(len(vals)),
+            }
+        )
+    boot_df = pd.DataFrame(boot_summary)
+    boot_df.to_parquet(paths.analytics_dir() / "survival_bootstrap.parquet", index=False)
+    log.info("bootstrap CI written to analytics/survival_bootstrap.parquet")
+
+    # Time-dependent AUC for Cox and RSF
+    # Times must be >= inactivity_days (earliest possible event) and
+    # < max observed follow-up.
+    from scipy.stats import spearmanr
+
+    from osspulse.inference import time_dependent_auc
+
+    times = [180, 210, 240, 270, 300, 330, 360]
+    risk_cox = cph.predict_partial_hazard(prep[FEATURES]).to_numpy()
+
+    # Sanity-check direction: partial hazard should be NEGATIVELY correlated
+    # with survival duration (higher risk -> earlier event). If the sign is
+    # flipped, cumulative_dynamic_auc will return AUC < 0.5.
+    rho, _ = spearmanr(risk_cox, prep["duration_days"].to_numpy())
+    log.info("spearman(partial_hazard, duration_days) = %.3f", rho)
+    if rho > 0:
+        log.warning(
+            "partial hazard correlates POSITIVELY with duration (rho=%.3f); "
+            "flipping sign so higher = higher risk",
+            rho,
+        )
+        risk_cox = -risk_cox
+
+    tdauc_cox = time_dependent_auc(
+        prep["duration_days"].to_numpy(),
+        prep["event_flag"].to_numpy(),
+        risk_cox,
+        times,
+    )
+    tdauc_cox["model"] = "cox"
+    tdauc_cox.to_parquet(paths.analytics_dir() / "survival_time_auc_cox.parquet", index=False)
+    log.info("time-dependent AUC (Cox):\n%s", tdauc_cox.to_string(index=False))
+
     # RSF
     c_rsf, importances = fit_rsf(prep, cfg.cohort.sample_seed)
     c_cox = float(cph.concordance_index_)

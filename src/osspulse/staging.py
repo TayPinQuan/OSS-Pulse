@@ -180,6 +180,7 @@ def _scalar(con: duckdb.DuckDBPyConnection, sql: str) -> int:
         raise RuntimeError(f"Query returned no rows: {sql}")
     return int(row[0])
 
+
 def write_report(cfg: Config) -> Path:
     con = duckdb.connect()
     events = paths.staging_dir() / "events.parquet"
@@ -200,7 +201,9 @@ def write_report(cfg: Config) -> Path:
         },
         "event_types": con.execute(
             f"SELECT type, COUNT(*) AS n FROM '{events}' GROUP BY type ORDER BY n DESC"
-        ).df().to_dict(orient="records"),
+        )
+        .df()
+        .to_dict(orient="records"),
         "distinct_repos_with_events": _scalar(
             con, f"SELECT COUNT(DISTINCT repo_id) FROM '{events}'"
         ),

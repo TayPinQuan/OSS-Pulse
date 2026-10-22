@@ -497,6 +497,49 @@ def main() -> None:
     metrics = pd.DataFrame([asdict(r) for r in all_rows])
     summary = summarise(all_rows)
 
+    # Diebold-Mariano: pairwise model comparison per horizon
+    from osspulse.inference import absolute_log_loss, diebold_mariano
+
+    dm_rows: list[dict] = []
+    models = sorted(metrics["model"].unique())
+    for h in HORIZONS:
+        sub = metrics[metrics["horizon"] == h]
+        for a, b in [(m1, m2) for m1 in models for m2 in models if m1 < m2]:
+            pivot = (
+                sub.pivot_table(
+                    index=["package", "origin_month"],
+                    columns="model",
+                    values=["actual", "forecast"],
+                    aggfunc="first",
+                )
+                .dropna()
+                .reset_index()
+            )
+            if a not in pivot["forecast"] or b not in pivot["forecast"]:
+                continue
+            actual = pivot["actual"][a].to_numpy()
+            fa = pivot["forecast"][a].to_numpy()
+            fb = pivot["forecast"][b].to_numpy()
+            loss_a = absolute_log_loss(actual, fa)
+            loss_b = absolute_log_loss(actual, fb)
+            res = diebold_mariano(loss_a, loss_b, lag=max(0, h - 1))
+            dm_rows.append(
+                {
+                    "horizon": h,
+                    "model_a": a,
+                    "model_b": b,
+                    "n": res.n,
+                    "mean_diff": res.mean_diff,
+                    "dm_stat": res.dm_stat,
+                    "p_value": res.p_value,
+                    "better": res.better,
+                }
+            )
+    dm_df = pd.DataFrame(dm_rows)
+    if not dm_df.empty:
+        dm_df.to_parquet(paths.analytics_dir() / "forecast_diebold_mariano.parquet", index=False)
+        log.info("Diebold-Mariano:\n%s", dm_df.to_string(index=False))
+
     metrics.to_parquet(paths.analytics_dir() / "forecast_metrics.parquet", index=False)
     summary.to_parquet(paths.analytics_dir() / "forecast_summary.parquet", index=False)
     backtest_cols = [

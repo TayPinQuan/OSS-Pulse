@@ -53,3 +53,6 @@ clean:
 
 pypi:
 	$(PY) -m osspulse.pypi $(ARGS)
+
+survival-advanced:
+	$(PY) -m osspulse.survival_advanced

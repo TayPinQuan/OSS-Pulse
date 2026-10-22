@@ -21,6 +21,13 @@ Issue-response speed and PR merge rate are not independently predictive once con
 
 **Recommendation:** Redesign onboarding to target **3+ contributors in the first 90 days**, not just "more than zero." A "second maintainer" checklist, structured first-issue programs, and contributor-facing docs help; a single co-maintainer does not. Add license selection to the same onboarding flow. Do not over-invest in response-time SLAs.
 
+**Proportional-hazards check (new in v2):** only `log_pushes_90d` violates the
+PH assumption (p = 0.011); its HR is 0.73 at 180 days and 0.70 at 360 days, so
+the reported HR of 0.75 is a reasonable time-average. `log_stars_90d`
+satisfies PH (p = 0.18), which rules out a compounding-over-time explanation
+for its HR > 1 — the effect is a stable subgroup difference driven by
+differential censoring, not a growing bias.
+
 ---
 
 ## Finding 2 — Naive and ETS are tied for best; LightGBM is significantly worse

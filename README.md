@@ -108,6 +108,15 @@ The stars coefficient (HR > 1) is counter-intuitive and is attributed to **infor
 
 KM log-rank tests: `license_present` p = 1.5e-14, `has_issue_response` p = 2.9e-20, `stars_bucket` p = 0.093.
 
+**Proportional-hazards diagnostics.** The Schoenfeld residual test finds that
+**only `log_pushes_90d` violates PH** (p = 0.011); its HR(t) ranges from 0.73
+at 180 days to 0.70 at 360 days, so the direction and magnitude are stable.
+`log_contributors_90d` is borderline (p = 0.062) and is flagged as a possible
+time-varying threshold effect. `log_stars_90d` **satisfies PH** (p = 0.18),
+which rules out a "compounding over time" explanation for its counter-intuitive
+HR > 1; the correct interpretation is a stable subgroup effect driven by
+differential censoring.
+
 ### Forecasting (RQ2, 40 packages, 6 origins)
 
 | Model | sMAPE h=1 | sMAPE h=3 | MASE median h=1 | 80% coverage h=1 / h=3 |

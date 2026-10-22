@@ -115,6 +115,14 @@ def load_dca():
 def load_subgroups():
     return pd.read_parquet(DATA / "survival_subgroups.parquet")
 
+@st.cache_data(show_spinner=False)
+def load_ph_test():
+    return pd.read_parquet(DATA / "survival_ph_test.parquet")
+
+@st.cache_data(show_spinner=False)
+def load_time_varying():
+    p = DATA / "survival_time_varying.parquet"
+    return pd.read_parquet(p) if p.exists() else pd.DataFrame()
 
 def _fig(path: Path, caption: str) -> None:
     if path.exists():
@@ -467,6 +475,109 @@ def page_inference() -> None:
         "than 'naive wins.'"
     )
 
+def page_ph() -> None:
+    st.title("⚖️ Proportional hazards diagnostics")
+    st.markdown(
+        "The Cox model assumes each covariate's effect is **constant over time**. "
+        "If that assumption fails, the reported hazard ratio is a time-average "
+        "and its interpretation is misleading. This page tests the assumption "
+        "per feature and, where it fails, estimates HR(t)."
+    )
+
+    ph = load_ph_test()
+    tv = load_time_varying()
+
+    # ---- Test table -----------------------------------------------------
+    st.markdown("## 1. Schoenfeld residual test")
+    view = ph.assign(
+        p_value=lambda d: d["p_value"].apply(
+            lambda p: "< 0.001" if p < 1e-3 else f"{p:.4f}"
+        ),
+        verdict=lambda d: d["ph_violated"].map({True: "❌ violated", False: "✅ holds"}),
+    )[["feature", "chi2", "p_value", "verdict"]]
+    st.dataframe(view, width="stretch", hide_index=True)
+
+    violated = ph.loc[ph["ph_violated"], "feature"].tolist()
+    if violated:
+        st.warning(
+            f"**{len(violated)} feature(s) violate PH**: {', '.join(violated)}. "
+            f"HR(t) is reported below for these features. All other features "
+            f"have a constant effect and their single HR is directly interpretable."
+        )
+    else:
+        st.success("All features satisfy the proportional hazards assumption.")
+
+    # ---- Residual plots -------------------------------------------------
+    st.markdown("## 2. Schoenfeld residuals")
+    st.markdown(
+        "Scaled Schoenfeld residuals vs event time. A flat LOWESS line means the "
+        "effect is constant; a trend means it changes over time."
+    )
+    features_with_plots = [f for f in ph["feature"] if (FIGS / f"survival_schoenfeld_{f}.png").exists()]
+    if features_with_plots:
+        n_cols = 2
+        for i in range(0, len(features_with_plots), n_cols):
+            cols = st.columns(n_cols)
+            for col, feature in zip(cols, features_with_plots[i:i + n_cols], strict=False):
+                with col:
+                    st.image(
+                        str(FIGS / f"survival_schoenfeld_{feature}.png"),
+                        caption=feature,
+                        width="stretch",
+                    )
+
+    # ---- Time-varying HR ------------------------------------------------
+    if not tv.empty:
+        st.markdown("## 3. HR(t) for features that violate PH")
+        st.markdown(
+            "The time-varying Cox model allows the coefficient to change with "
+            "log(time). The delta-method 95% CI accounts for the covariance "
+            "between the baseline and interaction terms."
+        )
+        for feature, sub in tv.groupby("feature"):
+            sub = sub.sort_values("time")
+            col1, col2 = st.columns([2, 3])
+            with col1:
+                view_tv = sub.assign(
+                    ci=lambda d: d.apply(
+                        lambda r: f"[{r['hr_lower']:.3f}, {r['hr_upper']:.3f}]",
+                        axis=1,
+                    )
+                )[["time", "hazard_ratio", "ci"]]
+                st.markdown(f"**{feature}**")
+                st.dataframe(view_tv, width="stretch", hide_index=True)
+            with col2:
+                fig_path = FIGS / f"survival_time_varying_{feature}.png"
+                if fig_path.exists():
+                    st.image(str(fig_path), width="stretch")
+
+        st.markdown("### What this changes")
+        st.markdown(
+            "`log_pushes_90d` is the **only** feature whose effect changes "
+            "meaningfully over time: HR goes from 0.73 at 180 days to 0.70 at "
+            "360 days. The direction and magnitude are stable; the v1 HR of 0.75 "
+            "remains a reasonable summary. For all other features, the single HR "
+            "is directly interpretable."
+        )
+
+    # ---- Interpretation ------------------------------------------------
+    st.markdown("## 4. What we learn from PH")
+    st.info(
+        "**`log_stars_90d` satisfies PH (p = 0.18).** This rules out one "
+        "explanation for the counter-intuitive HR > 1 — the effect is **not** "
+        "growing over time. Combined with the subgroup analysis (v2 Decision "
+        "page), the correct interpretation is: the stars effect is **constant "
+        "over time but varies across subgroups by censoring severity**. "
+        "High-star repos are censored more; the model learns a spurious "
+        "'high-star → high-risk' signal only in that subgroup. This is a "
+        "censoring artefact, but a stable one, not a compounding one.\n\n"
+        "**`log_contributors_90d` is borderline (p = 0.06).** This is consistent "
+        "with the v2 threshold finding: the effect may be a time-varying "
+        "threshold effect (weak at 1–2 contributors, strong at 3+). A v3 with a "
+        "longer window could test this directly.\n\n"
+        "**All other features satisfy PH.** Their single HRs are directly "
+        "interpretable and no time-varying correction is needed."
+    )
 
 def page_decision() -> None:
     st.title("🎯 Decision analysis: is the model usable?")
@@ -656,6 +767,7 @@ PAGES = {
     "Forecast (RQ2)": page_forecast,
     "Inference (v2)": page_inference,
     "Decision (v2)": page_decision,
+    "PH diagnostics (v2)": page_ph,
     "CI adoption (RQ3)": page_ci,
     "Methods and Limitations": page_methods,
 }

@@ -56,3 +56,6 @@ pypi:
 
 survival-advanced:
 	$(PY) -m osspulse.survival_advanced
+
+survival-ph:
+	$(PY) -m osspulse.survival_ph

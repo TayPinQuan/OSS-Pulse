@@ -1,0 +1,35 @@
+{
+  "violated_features": [
+    "log_pushes_90d"
+  ],
+  "hr_at_times": [
+    {
+      "feature": "log_pushes_90d",
+      "time": 180.0,
+      "hazard_ratio": 0.7264,
+      "hr_lower": 0.6619,
+      "hr_upper": 0.7971
+    },
+    {
+      "feature": "log_pushes_90d",
+      "time": 240.0,
+      "hazard_ratio": 0.7143,
+      "hr_lower": 0.6497,
+      "hr_upper": 0.7853
+    },
+    {
+      "feature": "log_pushes_90d",
+      "time": 300.0,
+      "hazard_ratio": 0.7051,
+      "hr_lower": 0.6402,
+      "hr_upper": 0.7766
+    },
+    {
+      "feature": "log_pushes_90d",
+      "time": 360.0,
+      "hazard_ratio": 0.6976,
+      "hr_lower": 0.6323,
+      "hr_upper": 0.7697
+    }
+  ]
+}

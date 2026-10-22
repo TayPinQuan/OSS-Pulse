@@ -1,0 +1,71 @@
+# ---------------------------------------------------------------------------
+# Environment
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# ---------------------------------------------------------------------------
+# Build artifacts
+# ---------------------------------------------------------------------------
+build/
+dist/
+*.so
+
+# ---------------------------------------------------------------------------
+# Data
+#
+# Raw GH Archive / GitHub API / pypistats files are large (hundreds of MB
+# to hundreds of GB) and must never be committed. Staging Parquet is a
+# reproducible intermediate and is also ignored.
+#
+# The `analytics/` directory IS committed so that a fresh clone can run
+# `make dashboard` and inspect every number in the README without
+# re-downloading anything. If you prefer to keep the repo lean, delete the
+# `!data/analytics/` line and document the `make` steps in the README.
+# ---------------------------------------------------------------------------
+data/*
+!data/.gitkeep
+!data/analytics/
+data/analytics/*.duckdb
+
+# ---------------------------------------------------------------------------
+# Local logs and scratch
+# ---------------------------------------------------------------------------
+*.log
+download.log
+nohup.out
+
+# ---------------------------------------------------------------------------
+# OS / editor
+# ---------------------------------------------------------------------------
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# ---------------------------------------------------------------------------
+# Jupyter
+# ---------------------------------------------------------------------------
+.ipynb_checkpoints/
+
+# ---------------------------------------------------------------------------
+# Streamlit secrets (never commit credentials)
+# ---------------------------------------------------------------------------
+.streamlit/secrets.toml
+
+# ---------------------------------------------------------------------------
+# Intermediate files
+# ---------------------------------------------------------------------------
+*.parquet.tmp
+*.duckdb.wal
